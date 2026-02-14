@@ -52,7 +52,8 @@ Hand_written_prediction_website/
 │   └── index.html                     # Single-page app — canvas, UI, JS logic (44 KB)
 ├── tests/
 │   └── test_app.py                    # End-to-end test suite (Playwright + API)
-├── hand-written-predictio-website.ipynb  # Jupyter notebook — model training & experimentation
+├── cnn_training.py                        # CNN model training script (MNIST, 99%+ accuracy)
+├── hand-written-predictio-website.ipynb   # Jupyter notebook — experimentation
 ├── Dockerfile                         # Multi-stage Docker build
 ├── render.yaml                        # Render deployment config
 └── .gitignore
@@ -215,7 +216,7 @@ Screenshots are saved to `/tmp/test_screenshots/` for visual inspection.
 | **Output** | Softmax over 10 classes (digits 0–9) |
 | **File** | `backend/digit_recognition_model.h5` |
 
-The full training pipeline is in [`hand-written-predictio-website.ipynb`](hand-written-predictio-website.ipynb).
+The full training pipeline is in [`cnn_training.py`](cnn_training.py) (also available as a Jupyter notebook: [`hand-written-predictio-website.ipynb`](hand-written-predictio-website.ipynb)).
 
 ---
 
