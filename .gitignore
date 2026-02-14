@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Unused root-level models (backend has its own copy)
+best_digit_model.h5
+digit_recognition_model.keras
+digit_recognition_model.tflite
+
+# Old/duplicate project directory
+Hand_written_prediction/
+
+# Test artifacts
+/tmp/test_screenshots/

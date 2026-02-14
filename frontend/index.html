@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neural Digit — AI Handwriting Recognition</title>
+    <meta name="description"
+        content="Draw a digit and watch a neural network predict it in real-time. 99.56% accuracy CNN model.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap"
+        rel="stylesheet">
+    <style>
+        /* ══════════════════════════════════════════════════════════════════
+           MIDNIGHT GALAXY — Cosmic Futuristic Sci-Fi Theme
+           Canvas: Dark with neon drawing
+           Mode:   Dark (default) / Light toggle
+           Vibe:   Maximum particles, glows, dynamic effects
+        ══════════════════════════════════════════════════════════════════ */
+
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* ─── Dark Theme (default) ────────────────────────────────── */
+        :root,
+        [data-theme="dark"] {
+            --bg-deep: #0c0817;
+            --bg-cosmos: #110d20;
+            --bg-card: #160f28;
+            --bg-surface: #1e1536;
+            --bg-hover: #2b1e4a;
+            --border: #2e2252;
+            --border-glow: #7c3aed;
+            --accent: #a78bfa;
+            --accent-bright: #7c3aed;
+            --accent-vivid: #c084fc;
+            --neon-cyan: #22d3ee;
+            --neon-pink: #f472b6;
+            --neon-draw: #22d3ee;
+            --text-primary: #e6e6fa;
+            --text-secondary: #a490c2;
+            --text-muted: #6b5b8a;
+            --success: #34d399;
+            --warning: #fbbf24;
+            --danger: #fb7185;
+            --canvas-bg: #0a0618;
+            --canvas-grid: rgba(124, 58, 237, 0.08);
+            --canvas-size: 280px;
+            --radius: 16px;
+            --radius-sm: 10px;
+            --glow-color: rgba(124, 58, 237, 0.4);
+            --glow-cyan: rgba(34, 211, 238, 0.3);
+            --star-color: rgba(167, 139, 250, 0.6);
+        }
+
+        /* ─── Light Theme ─────────────────────────────────────────── */
+        [data-theme="light"] {
+            --bg-deep: #f0ecf8;
+            --bg-cosmos: #e8e2f4;
+            --bg-card: #ffffff;
+            --bg-surface: #f5f0ff;
+            --bg-hover: #ebe4f7;
+            --border: #d4c8ef;
+            --border-glow: #7c3aed;
+            --accent: #7c3aed;
+            --accent-bright: #6d28d9;
+            --accent-vivid: #8b5cf6;
+            --neon-cyan: #0891b2;
+            --neon-pink: #db2777;
+            --neon-draw: #6d28d9;
+            --text-primary: #1e1536;
+            --text-secondary: #4a4e8f;
+            --text-muted: #8b8aa0;
+            --success: #059669;
+            --warning: #d97706;
+            --danger: #e11d48;
+            --canvas-bg: #1a1230;
+            --canvas-grid: rgba(124, 58, 237, 0.12);
+            --canvas-size: 280px;
+            --radius: 16px;
+            --radius-sm: 10px;
+            --glow-color: rgba(124, 58, 237, 0.15);
+            --glow-cyan: rgba(8, 145, 178, 0.15);
+            --star-color: rgba(124, 58, 237, 0.3);
+        }
+
+        @media (max-width: 480px) {
+
+            :root,
+            [data-theme="dark"],
+            [data-theme="light"] {
+                --canvas-size: calc(100vw - 48px);
+            }
+        }
+
+        /* ─── Base ────────────────────────────────────────────────── */
+        html {
+            font-size: 16px;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            position: relative;
+            transition: background .5s ease, color .5s ease;
+        }
+
+        /* ─── Cosmic Background ───────────────────────────────────── */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 80% 50% at 20% 10%, rgba(124, 58, 237, .15), transparent 50%),
+                radial-gradient(ellipse 60% 40% at 80% 90%, rgba(34, 211, 238, .08), transparent 50%),
+                radial-gradient(ellipse 50% 60% at 60% 30%, rgba(192, 132, 252, .06), transparent 50%),
+                radial-gradient(ellipse 40% 30% at 10% 80%, rgba(244, 114, 182, .05), transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+            transition: opacity .5s;
+        }
+
+        [data-theme="light"] body::before {
+            opacity: 0.5;
+        }
+
+        /* ─── Star field particles ────────────────────────────────── */
+        .star {
+            position: fixed;
+            border-radius: 50%;
+            background: var(--star-color);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .star--twinkle {
+            animation: twinkle ease-in-out infinite alternate;
+        }
+
+        .star--drift {
+            animation: drift linear infinite;
+        }
+
+        @keyframes twinkle {
+            0% {
+                opacity: 0.1;
+                transform: scale(0.5);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1.2);
+            }
+        }
+
+        @keyframes drift {
+            0% {
+                opacity: 0;
+                transform: translateY(100vh) scale(0.3);
+            }
+
+            15% {
+                opacity: 0.8;
+            }
+
+            85% {
+                opacity: 0.4;
+            }
+
+            100% {
+                opacity: 0;
+                transform: translateY(-10vh) scale(1);
+            }
+        }
+
+        /* ─── Nebula Blobs ────────────────────────────────────────── */
+        .nebula {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            pointer-events: none;
+            z-index: 0;
+            animation: nebula-pulse 8s ease-in-out infinite alternate;
+        }
+
+        .nebula--1 {
+            width: 300px;
+            height: 300px;
+            background: rgba(124, 58, 237, 0.08);
+            top: 10%;
+            left: -5%;
+        }
+
+        .nebula--2 {
+            width: 250px;
+            height: 250px;
+            background: rgba(34, 211, 238, 0.06);
+            bottom: 15%;
+            right: -8%;
+            animation-delay: -3s;
+        }
+
+        .nebula--3 {
+            width: 200px;
+            height: 200px;
+            background: rgba(244, 114, 182, 0.05);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation-delay: -6s;
+        }
+
+        @keyframes nebula-pulse {
+            0% {
+                transform: scale(1) rotate(0deg);
+                opacity: 0.6;
+            }
+
+            100% {
+                transform: scale(1.3) rotate(10deg);
+                opacity: 1;
+            }
+        }
+
+        [data-theme="light"] .nebula {
+            opacity: 0.3;
+        }
+
+        [data-theme="light"] .star {
+            opacity: 0.3;
+        }
+
+        /* ─── Layout ──────────────────────────────────────────────── */
+        .app {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 440px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            min-height: 100dvh;
+        }
+
+        /* ─── Theme Toggle ────────────────────────────────────────── */
+        .theme-toggle {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            z-index: 100;
+            width: 44px;
+            height: 44px;
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            background: var(--bg-card);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: all .3s ease;
+            box-shadow: 0 0 20px var(--glow-color);
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--accent);
+            box-shadow: 0 0 30px var(--glow-color);
+            transform: rotate(30deg);
+        }
+
+        /* ─── Header ──────────────────────────────────────────────── */
+        .header {
+            text-align: center;
+            padding: 16px 0 4px;
+        }
+
+        .header__logo {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: .65rem;
+            letter-spacing: 6px;
+            text-transform: uppercase;
+            color: var(--neon-cyan);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            text-shadow: 0 0 10px var(--glow-cyan);
+        }
+
+        .header__logo::before,
+        .header__logo::after {
+            content: '';
+            width: 30px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--neon-cyan));
+        }
+
+        .header__logo::after {
+            background: linear-gradient(90deg, var(--neon-cyan), transparent);
+        }
+
+        .header h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.6rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            line-height: 1.3;
+            text-transform: uppercase;
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-vivid) 50%, var(--neon-cyan) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 0 15px var(--glow-color));
+        }
+
+        .header p {
+            font-size: .9rem;
+            color: var(--text-secondary);
+            margin-top: 6px;
+            font-weight: 400;
+            letter-spacing: 0.5px;
+        }
+
+        /* ─── Status pill ─────────────────────────────────────────── */
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 14px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            font-size: .7rem;
+            font-family: 'Share Tech Mono', monospace;
+            color: var(--text-muted);
+            margin: 6px auto 0;
+            transition: all .4s;
+        }
+
+        .status-pill .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--danger);
+            transition: background .4s, box-shadow .4s;
+        }
+
+        .status-pill.online .dot {
+            background: var(--success);
+            box-shadow: 0 0 8px var(--success), 0 0 16px var(--success);
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+
+        .status-pill.online {
+            color: var(--success);
+            border-color: rgba(52, 211, 153, .2);
+        }
+
+        @keyframes pulse-dot {
+
+            0%,
+            100% {
+                box-shadow: 0 0 6px var(--success);
+            }
+
+            50% {
+                box-shadow: 0 0 12px var(--success), 0 0 24px var(--success);
+            }
+        }
+
+        /* ─── Canvas Card ─────────────────────────────────────────── */
+        .canvas-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+            transition: border-color .3s, box-shadow .3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Holographic edge glow on hover/draw */
+        .canvas-card::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: var(--radius);
+            background: conic-gradient(from 0deg,
+                    var(--accent-bright),
+                    var(--neon-cyan),
+                    var(--neon-pink),
+                    var(--accent-bright));
+            opacity: 0;
+            z-index: -1;
+            transition: opacity .4s;
+        }
+
+        .canvas-card.drawing::before {
+            opacity: 0.6;
+            animation: holo-rotate 3s linear infinite;
+        }
+
+        @keyframes holo-rotate {
+            to {
+                filter: hue-rotate(360deg);
+            }
+        }
+
+        .canvas-card.drawing {
+            border-color: transparent;
+            box-shadow: 0 0 40px var(--glow-color), 0 0 15px var(--glow-cyan);
+        }
+
+        .canvas-label {
+            font-size: .65rem;
+            font-family: 'Share Tech Mono', monospace;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+
+        /* The dark canvas */
+        #drawCanvas {
+            width: var(--canvas-size);
+            height: var(--canvas-size);
+            border-radius: var(--radius-sm);
+            cursor: crosshair;
+            touch-action: none;
+            background: var(--canvas-bg);
+            display: block;
+            border: 1px solid var(--border);
+            box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.3),
+                0 0 20px var(--glow-color);
+        }
+
+        /* ─── Toolbar ─────────────────────────────────────────────── */
+        .toolbar {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+            align-items: center;
+        }
+
+        .toolbar__info {
+            flex: 1;
+            font-size: .65rem;
+            font-family: 'Share Tech Mono', monospace;
+            color: var(--text-muted);
+        }
+
+        .toolbar__info span {
+            color: var(--neon-cyan);
+            text-shadow: 0 0 6px var(--glow-cyan);
+        }
+
+        /* ─── Buttons ─────────────────────────────────────────────── */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-family: 'Orbitron', sans-serif;
+            font-size: .75rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all .25s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn:active {
+            transform: scale(.96);
+        }
+
+        .btn:disabled {
+            opacity: .3;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn--primary {
+            background: linear-gradient(135deg, var(--accent-bright) 0%, #4f46e5 50%, var(--neon-cyan) 100%);
+            background-size: 200% 200%;
+            animation: gradient-shift 3s ease infinite;
+            color: #fff;
+            flex: 1;
+            box-shadow: 0 4px 20px var(--glow-color), 0 0 10px var(--glow-cyan);
+        }
+
+        @keyframes gradient-shift {
+
+            0%,
+            100% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+        }
+
+        .btn--primary:hover:not(:disabled) {
+            box-shadow: 0 6px 30px var(--glow-color), 0 0 20px var(--glow-cyan);
+            transform: translateY(-2px);
+        }
+
+        /* Scan line effect on primary button */
+        .btn--primary::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+            transform: skewX(-15deg);
+            transition: left .6s;
+        }
+
+        .btn--primary:hover::after {
+            left: 150%;
+        }
+
+        .btn--ghost {
+            background: var(--bg-surface);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+
+        .btn--ghost:hover:not(:disabled) {
+            border-color: var(--neon-pink);
+            color: var(--neon-pink);
+            background: rgba(244, 114, 182, .06);
+            box-shadow: 0 0 15px rgba(244, 114, 182, .15);
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* ─── Loading spinner ─────────────────────────────────────── */
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--border);
+            border-top-color: var(--neon-cyan);
+            border-right-color: var(--accent);
+            border-radius: 50%;
+            animation: spin .8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ─── Result Card ─────────────────────────────────────────── */
+        .result-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            transition: all .4s;
+            position: relative;
+        }
+
+        .result-card.has-result {
+            border-color: var(--accent-bright);
+            box-shadow: 0 0 50px var(--glow-color), 0 0 15px var(--glow-cyan);
+        }
+
+        /* Scanning overlay when result appears */
+        .result-card.has-result::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
+            animation: scan-line 2s ease-in-out infinite;
+        }
+
+        @keyframes scan-line {
+            0% {
+                top: 0;
+                opacity: 1;
+            }
+
+            50% {
+                top: 100%;
+                opacity: 0.3;
+            }
+
+            51% {
+                top: 0;
+                opacity: 0;
+            }
+
+            100% {
+                top: 0;
+                opacity: 0;
+            }
+        }
+
+        .result-card__placeholder {
+            font-size: .85rem;
+            color: var(--text-muted);
+            font-weight: 400;
+            font-family: 'Share Tech Mono', monospace;
+            letter-spacing: 0.5px;
+        }
+
+        /* Big digit */
+        .predicted-digit {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 5rem;
+            font-weight: 900;
+            line-height: 1;
+            background: linear-gradient(135deg, var(--neon-cyan) 0%, var(--accent-vivid) 50%, var(--neon-pink) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 0 25px var(--glow-cyan)) drop-shadow(0 0 40px var(--glow-color));
+            animation: digit-appear .5s cubic-bezier(.34, 1.56, .64, 1);
+        }
+
+        @keyframes digit-appear {
+            0% {
+                opacity: 0;
+                transform: scale(0.3) rotateY(90deg);
+                filter: blur(10px);
+            }
+
+            60% {
+                transform: scale(1.1) rotateY(-5deg);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1) rotateY(0);
+                filter: blur(0);
+            }
+        }
+
+        /* Confidence bar */
+        .confidence-row {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .confidence-row__label {
+            font-size: .7rem;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 600;
+            color: var(--neon-cyan);
+            white-space: nowrap;
+            text-shadow: 0 0 8px var(--glow-cyan);
+        }
+
+        .confidence-bar {
+            flex: 1;
+            height: 6px;
+            background: var(--bg-surface);
+            border-radius: 3px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .confidence-bar__fill {
+            height: 100%;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--accent-bright), var(--neon-cyan), var(--success));
+            box-shadow: 0 0 10px var(--glow-cyan);
+            transition: width .6s cubic-bezier(.23, 1, .32, 1);
+            width: 0;
+        }
+
+        /* Probabilities grid */
+        .probs-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 6px;
+            width: 100%;
+        }
+
+        .prob-cell {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 8px 4px;
+            text-align: center;
+            font-family: 'Share Tech Mono', monospace;
+            transition: all .3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .prob-cell.highlight {
+            border-color: var(--neon-cyan);
+            background: rgba(34, 211, 238, .08);
+            box-shadow: 0 0 12px var(--glow-cyan);
+        }
+
+        .prob-cell__digit {
+            font-size: .85rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .prob-cell__bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent), var(--neon-cyan));
+            border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+            transition: width .5s ease;
+            width: 0;
+        }
+
+        .prob-cell__pct {
+            font-size: .6rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* Inference time */
+        .inference-time {
+            font-size: .65rem;
+            font-family: 'Share Tech Mono', monospace;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+        }
+
+        .inference-time span {
+            color: var(--neon-cyan);
+            text-shadow: 0 0 6px var(--glow-cyan);
+        }
+
+        /* ─── Error ───────────────────────────────────────────────── */
+        .error-msg {
+            color: var(--danger);
+            font-size: .85rem;
+            font-weight: 600;
+            font-family: 'Share Tech Mono', monospace;
+            animation: shake .4s, glitch .1s step-end 3;
+            text-shadow: 0 0 8px rgba(251, 113, 133, 0.5);
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-6px);
+            }
+
+            75% {
+                transform: translateX(6px);
+            }
+        }
+
+        @keyframes glitch {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.6;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        /* ─── Footer ──────────────────────────────────────────────── */
+        .footer {
+            text-align: center;
+            padding: 12px 0 24px;
+            font-size: .65rem;
+            color: var(--text-muted);
+            font-family: 'Share Tech Mono', monospace;
+            letter-spacing: 1px;
+        }
+
+        .footer a {
+            color: var(--accent);
+            text-decoration: none;
+            transition: color .3s;
+        }
+
+        .footer a:hover {
+            color: var(--neon-cyan);
+            text-shadow: 0 0 6px var(--glow-cyan);
+        }
+
+        /* ─── Responsive ──────────────────────────────────────────── */
+        @media (max-width: 480px) {
+            .app {
+                padding: 16px;
+                gap: 14px;
+            }
+
+            .header h1 {
+                font-size: 1.2rem;
+            }
+
+            .canvas-card {
+                padding: 12px;
+            }
+
+            .predicted-digit {
+                font-size: 3.5rem;
+            }
+
+            .probs-grid {
+                gap: 4px;
+            }
+
+            .prob-cell {
+                padding: 6px 2px;
+            }
+
+            .theme-toggle {
+                top: 10px;
+                right: 10px;
+                width: 38px;
+                height: 38px;
+                font-size: 1rem;
+            }
+        }
+
+        /* ─── Scrollbar ───────────────────────────────────────────── */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-deep);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Nebula blobs -->
+    <div class="nebula nebula--1"></div>
+    <div class="nebula nebula--2"></div>
+    <div class="nebula nebula--3"></div>
+
+    <!-- Star field (created in JS) -->
+    <div id="starfield"></div>
+
+    <!-- Theme toggle -->
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle light/dark mode">
+        🌙
+    </button>
+
+    <div class="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header__logo">neural digit</div>
+            <h1>Handwriting Recognition</h1>
+            <p>Draw a digit (0–9) below and let the AI predict it</p>
+            <div class="status-pill" id="statusPill">
+                <span class="dot"></span>
+                <span id="statusText">connecting …</span>
+            </div>
+        </header>
+
+        <!-- Canvas -->
+        <section class="canvas-card" id="canvasCard">
+            <span class="canvas-label">⬡ drawing pad</span>
+            <canvas id="drawCanvas" width="280" height="280"></canvas>
+            <div class="toolbar">
+                <div class="toolbar__info">stroke: <span>15px</span> · neon: <span>cyan</span> · size:
+                    <span>280×280</span></div>
+            </div>
+        </section>
+
+        <!-- Actions -->
+        <div class="actions">
+            <button class="btn btn--ghost" id="clearBtn" onclick="clearCanvas()">
+                ✕ Clear
+            </button>
+            <button class="btn btn--primary" id="predictBtn" onclick="predictDigit()">
+                ⚡ Predict
+            </button>
+        </div>
+
+        <!-- Result -->
+        <section class="result-card" id="resultCard">
+            <p class="result-card__placeholder" id="placeholder">
+                Your prediction will appear here
+            </p>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            Built by Naveen Kumar K · CNN model · 99.56% accuracy
+        </footer>
+    </div>
+
+    <script>
+        // ─── Config ────────────────────────────────────────────────────────────
+        const API_URL = window.location.origin;
+
+        // ─── Canvas Setup ──────────────────────────────────────────────────────
+        const canvas = document.getElementById('drawCanvas');
+        const ctx = canvas.getContext('2d');
+        const card = document.getElementById('canvasCard');
+        let drawing = false;
+        let lastX = 0;
+        let lastY = 0;
+        let hasDrawn = false;
+
+        // High-DPI support for dark canvas
+        function setupCanvas() {
+            const rect = canvas.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            ctx.scale(dpr, dpr);
+            canvas.style.width = rect.width + 'px';
+            canvas.style.height = rect.height + 'px';
+            resetCanvas();
+        }
+
+        function resetCanvas() {
+            // Reset transform to fill the FULL backing buffer
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+            // Dark canvas background
+            ctx.fillStyle = '#0a0618';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw subtle grid pattern
+            const dpr = window.devicePixelRatio || 1;
+            const cssW = canvas.width / dpr;
+            const cssH = canvas.height / dpr;
+            ctx.scale(dpr, dpr);
+
+            ctx.strokeStyle = 'rgba(124, 58, 237, 0.06)';
+            ctx.lineWidth = 0.5;
+            const gridSize = 20;
+            for (let x = gridSize; x < cssW; x += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, cssH);
+                ctx.stroke();
+            }
+            for (let y = gridSize; y < cssH; y += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(cssW, y);
+                ctx.stroke();
+            }
+
+            // Crosshair center guides
+            ctx.strokeStyle = 'rgba(124, 58, 237, 0.12)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.moveTo(cssW / 2, 0);
+            ctx.lineTo(cssW / 2, cssH);
+            ctx.moveTo(0, cssH / 2);
+            ctx.lineTo(cssW, cssH / 2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Drawing properties — neon cyan stroke
+            ctx.lineWidth = 15;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.strokeStyle = '#22d3ee';
+            ctx.shadowColor = 'rgba(34, 211, 238, 0.6)';
+            ctx.shadowBlur = 12;
+        }
+
+        // ─── Drawing ───────────────────────────────────────────────────────────
+        function getPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            if (e.touches) {
+                return {
+                    x: e.touches[0].clientX - rect.left,
+                    y: e.touches[0].clientY - rect.top
+                };
+            }
+            return { x: e.offsetX, y: e.offsetY };
+        }
+
+        function startDraw(e) {
+            e.preventDefault();
+            drawing = true;
+            hasDrawn = true;
+            const pos = getPos(e);
+            lastX = pos.x;
+            lastY = pos.y;
+            // Draw a glowing dot for single taps
+            ctx.beginPath();
+            ctx.arc(lastX, lastY, ctx.lineWidth / 2, 0, Math.PI * 2);
+            ctx.fillStyle = '#22d3ee';
+            ctx.shadowColor = 'rgba(34, 211, 238, 0.8)';
+            ctx.shadowBlur = 18;
+            ctx.fill();
+            card.classList.add('drawing');
+        }
+
+        function doDraw(e) {
+            if (!drawing) return;
+            e.preventDefault();
+            const pos = getPos(e);
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+            lastX = pos.x;
+            lastY = pos.y;
+        }
+
+        function endDraw() {
+            drawing = false;
+            card.classList.remove('drawing');
+        }
+
+        // Mouse
+        canvas.addEventListener('mousedown', startDraw);
+        canvas.addEventListener('mousemove', doDraw);
+        canvas.addEventListener('mouseup', endDraw);
+        canvas.addEventListener('mouseleave', endDraw);
+
+        // Touch
+        canvas.addEventListener('touchstart', startDraw, { passive: false });
+        canvas.addEventListener('touchmove', doDraw, { passive: false });
+        canvas.addEventListener('touchend', endDraw);
+        canvas.addEventListener('touchcancel', endDraw);
+
+        // ─── Clear ─────────────────────────────────────────────────────────────
+        function clearCanvas() {
+            resetCanvas();
+            hasDrawn = false;
+            const resultCard = document.getElementById('resultCard');
+            resultCard.classList.remove('has-result');
+            resultCard.innerHTML = '<p class="result-card__placeholder" id="placeholder">Your prediction will appear here</p>';
+        }
+
+        // ─── Predict ───────────────────────────────────────────────────────────
+        async function predictDigit() {
+            if (!hasDrawn) {
+                showError('Draw a digit first!');
+                return;
+            }
+
+            const resultCard = document.getElementById('resultCard');
+            const predictBtn = document.getElementById('predictBtn');
+
+            resultCard.classList.remove('has-result');
+            resultCard.innerHTML = '<div class="spinner"></div>';
+            predictBtn.disabled = true;
+
+            try {
+                // Create a temporary 280x280 canvas for the API
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = 280;
+                tempCanvas.height = 280;
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, 280, 280);
+                const imageData = tempCanvas.toDataURL('image/png');
+
+                const response = await fetch(`${API_URL}/predict`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image: imageData })
+                });
+
+                if (!response.ok) {
+                    const err = await response.json().catch(() => ({ detail: 'Server error' }));
+                    throw new Error(err.detail || `Error ${response.status}`);
+                }
+
+                const data = await response.json();
+                showResult(data);
+
+            } catch (err) {
+                console.error(err);
+                showError(err.message);
+            } finally {
+                predictBtn.disabled = false;
+            }
+        }
+
+        // ─── Display Result ────────────────────────────────────────────────────
+        function showResult(data) {
+            const resultCard = document.getElementById('resultCard');
+            const confPct = (data.confidence * 100).toFixed(1);
+
+            let probsHTML = '';
+            const probs = data.all_probabilities;
+            for (let i = 0; i < 10; i++) {
+                const p = (probs[String(i)] * 100);
+                const isTop = i === data.digit;
+                probsHTML += `
+                <div class="prob-cell ${isTop ? 'highlight' : ''}">
+                    <div class="prob-cell__digit">${i}</div>
+                    <div class="prob-cell__pct">${p.toFixed(1)}%</div>
+                    <div class="prob-cell__bar" style="width:${p}%"></div>
+                </div>`;
+            }
+
+            resultCard.innerHTML = `
+                <div class="predicted-digit">${data.digit}</div>
+                <div class="confidence-row">
+                    <span class="confidence-row__label">${confPct}%</span>
+                    <div class="confidence-bar">
+                        <div class="confidence-bar__fill" id="confFill"></div>
+                    </div>
+                </div>
+                <div class="probs-grid">${probsHTML}</div>
+                <div class="inference-time">⚡ inference: <span>${data.inference_time_ms.toFixed(1)} ms</span></div>
+            `;
+
+            resultCard.classList.add('has-result');
+
+            requestAnimationFrame(() => {
+                const fill = document.getElementById('confFill');
+                if (fill) fill.style.width = confPct + '%';
+            });
+        }
+
+        function showError(msg) {
+            const resultCard = document.getElementById('resultCard');
+            resultCard.classList.remove('has-result');
+            resultCard.innerHTML = `<div class="error-msg">✕ ${msg}</div>`;
+        }
+
+        // ─── Health Check ──────────────────────────────────────────────────────
+        async function checkHealth() {
+            const pill = document.getElementById('statusPill');
+            const text = document.getElementById('statusText');
+            try {
+                const res = await fetch(`${API_URL}/health`);
+                if (res.ok) {
+                    const d = await res.json();
+                    if (d.model_loaded) {
+                        pill.classList.add('online');
+                        text.textContent = 'model ready';
+                    } else {
+                        text.textContent = 'model loading …';
+                    }
+                } else throw 0;
+            } catch {
+                pill.classList.remove('online');
+                text.textContent = 'offline';
+            }
+        }
+
+        // ─── Theme Toggle ──────────────────────────────────────────────────────
+        function toggleTheme() {
+            const html = document.documentElement;
+            const btn = document.getElementById('themeToggle');
+            if (html.getAttribute('data-theme') === 'dark') {
+                html.setAttribute('data-theme', 'light');
+                btn.textContent = '☀️';
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.setAttribute('data-theme', 'dark');
+                btn.textContent = '🌙';
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        // Restore saved theme
+        function initTheme() {
+            const saved = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const theme = saved || (prefersDark ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-theme', theme);
+            document.getElementById('themeToggle').textContent = theme === 'dark' ? '🌙' : '☀️';
+        }
+
+        // ─── Keyboard shortcuts ────────────────────────────────────────────────
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') predictDigit();
+            if (e.key === 'Escape' || e.key === 'Delete') clearCanvas();
+        });
+
+        // ─── Star Field ────────────────────────────────────────────────────────
+        function createStarField() {
+            const container = document.getElementById('starfield');
+
+            // Static twinkling stars
+            for (let i = 0; i < 60; i++) {
+                const star = document.createElement('div');
+                star.className = 'star star--twinkle';
+                const size = (0.5 + Math.random() * 2.5);
+                star.style.width = size + 'px';
+                star.style.height = size + 'px';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDuration = (2 + Math.random() * 4) + 's';
+                star.style.animationDelay = (Math.random() * 5) + 's';
+                container.appendChild(star);
+            }
+
+            // Drifting particles
+            for (let i = 0; i < 15; i++) {
+                const p = document.createElement('div');
+                p.className = 'star star--drift';
+                const size = (1 + Math.random() * 2);
+                p.style.width = size + 'px';
+                p.style.height = size + 'px';
+                p.style.left = Math.random() * 100 + '%';
+                p.style.animationDuration = (10 + Math.random() * 15) + 's';
+                p.style.animationDelay = (Math.random() * 12) + 's';
+                container.appendChild(p);
+            }
+        }
+
+        // ─── Init ──────────────────────────────────────────────────────────────
+        window.addEventListener('load', () => {
+            initTheme();
+            setupCanvas();
+            checkHealth();
+            createStarField();
+            setInterval(checkHealth, 15000);
+        });
+
+        // Handle resize
+        window.addEventListener('resize', () => {
+            const imageData = canvas.toDataURL();
+            setupCanvas();
+            const img = new Image();
+            img.onload = () => {
+                const rect = canvas.getBoundingClientRect();
+                ctx.drawImage(img, 0, 0, rect.width, rect.height);
+            };
+            img.src = imageData;
+        });
+    </script>
+</body>
+
+</html>
