@@ -216,7 +216,7 @@ Screenshots are saved to `/tmp/test_screenshots/` for visual inspection.
 | **Output** | Softmax over 10 classes (digits 0–9) |
 | **File** | `backend/digit_recognition_model.h5` |
 
-The full training pipeline is in [`cnn_training.py`](cnn_training.py) (also available as a Jupyter notebook: [`hand-written-predictio-website.ipynb`](hand-written-predictio-website.ipynb)).
+The full training pipeline is in [`cnn_training.py`](cnn_training.py).
 
 ---
 
